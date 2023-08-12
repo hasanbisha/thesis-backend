@@ -16,6 +16,9 @@ import { WorkingGroupsModule } from './working-groups/working-groups.module';
 import { WorkTypesModule } from './work-types/work-types.module';
 import { PaymentGroupsModule } from './payment-groups/payment-groups.module';
 import { WorkRulesModule } from './work-rules/work-rules.module';
+import { AuthModule } from './auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './auth/auth.guard';
 
 @Module({
   imports: [
@@ -35,6 +38,7 @@ import { WorkRulesModule } from './work-rules/work-rules.module';
     ClockModule,
     JobsModule,
     LocationsModule,
+    AuthModule,
     // ProjectsModule,
     // TimesheetsModule,
     // WorkingGroupsModule,
@@ -43,6 +47,12 @@ import { WorkRulesModule } from './work-rules/work-rules.module';
     // WorkRulesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+  ],
 })
 export class AppModule {}

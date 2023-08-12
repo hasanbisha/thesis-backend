@@ -21,6 +21,9 @@ export class User {
   @Column()
   lastName: string;
 
+  @Column()
+  email: string;
+
   @Column({ default: true })
   isActive: boolean;
 
@@ -47,4 +50,7 @@ export class User {
   @ManyToMany(() => Project)
   @JoinTable()
   projects: Project[];
+
+  @Column()
+  password: string;
 }

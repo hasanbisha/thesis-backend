@@ -3,15 +3,13 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private repository: Repository<User>,
-
-    private dataSource: DataSource,
   ) {}
 
   create(createUserDto: CreateUserDto) {
@@ -24,6 +22,10 @@ export class UserService {
 
   findOne(id: number) {
     return this.repository.findOneBy({ id });
+  }
+
+  findOneBy(options: FindOptionsWhere<User>) {
+    return this.repository.findOneBy(options);
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
