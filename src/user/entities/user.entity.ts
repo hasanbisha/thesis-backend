@@ -6,6 +6,7 @@ import { Project } from "src/projects/entities/project.entity";
 import { Timesheet } from "src/timesheets/entities/timesheet.entity";
 import { WorkingGroup } from "src/working-groups/entities/working-group.entity";
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Role } from "../roles/role.enum";
 
 @Entity()
 export class User {
@@ -53,4 +54,7 @@ export class User {
 
   @Column()
   password: string;
+
+  @Column()
+  role: Role;
 }

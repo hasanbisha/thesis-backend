@@ -18,6 +18,7 @@ import { PaymentGroupsModule } from './payment-groups/payment-groups.module';
 import { WorkRulesModule } from './work-rules/work-rules.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './user/roles/roles.guard';
 import { AuthGuard } from './auth/auth.guard';
 
 @Module({
@@ -49,6 +50,10 @@ import { AuthGuard } from './auth/auth.guard';
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
