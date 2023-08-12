@@ -21,8 +21,14 @@ export class User {
   @Column()
   lastName: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
+
+  @Column()
+  password: string;
+
+  @Column()
+  role: 0 | 1 | 2;
 
   @Column({ default: true })
   isActive: boolean;
@@ -35,11 +41,11 @@ export class User {
 
   @ManyToMany(() => Job)
   @JoinTable()
-  job: Job[];
+  jobs: Job[];
 
   @ManyToMany(() => Location)
   @JoinTable()
-  location: Location[];
+  locations: Location[];
 
   @ManyToOne(() => WorkingGroup, workingGroup => workingGroup.users)
   workingGroup: WorkingGroup;
@@ -50,10 +56,4 @@ export class User {
   @ManyToMany(() => Project)
   @JoinTable()
   projects: Project[];
-
-  @Column()
-  password: string;
-
-  @Column()
-  role: 0 | 1 | 2;
 }

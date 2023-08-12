@@ -21,8 +21,9 @@ export class JobsService {
   findAll({ page, pageSize, filters, sortBy, orderBy }: CrudDto) {
     const query = this.repository
       .createQueryBuilder()
-      .take(pageSize)
-      .skip(page * pageSize);
+    if (page && pageSize) {
+      query.take(pageSize).skip(page * pageSize);
+    }
     if (sortBy) {
       query.orderBy(sortBy, orderBy || "DESC");
     }

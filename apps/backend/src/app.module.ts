@@ -43,8 +43,6 @@ import { PaymentGroup } from './payment-groups/entities/payment-group.entity';
       database: "database.sqlite",
       logging: false,
       autoLoadEntities: true,
-      
-
       entities: [
         User,
         Clock,
@@ -56,8 +54,6 @@ import { PaymentGroup } from './payment-groups/entities/payment-group.entity';
         WorkingGroup,
         PaymentGroup,
       ],
-
-
       synchronize: true,
     }),
     UserModule,
@@ -77,11 +73,11 @@ import { PaymentGroup } from './payment-groups/entities/payment-group.entity';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: RolesGuard,
+      useClass: AuthGuard,
     },
     {
       provide: APP_GUARD,
-      useClass: AuthGuard,
+      useClass: RolesGuard,
     },
   ],
 })

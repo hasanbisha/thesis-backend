@@ -3,11 +3,11 @@ import { IsIn, IsNumber, IsObject, IsOptional, IsString } from "class-validator"
 export class CrudDto {
 	@IsOptional()
 	@IsNumber()
-	public page: number = 1;
+	public page: number;
 
 	@IsOptional()
 	@IsNumber()
-	public pageSize: number = 10;
+	public pageSize: number;
 
 	@IsOptional()
 	@IsObject()

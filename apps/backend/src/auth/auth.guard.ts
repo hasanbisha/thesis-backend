@@ -3,11 +3,13 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
+  createParamDecorator,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { UserService } from '../user/user.service';
 
 const PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(PUBLIC_KEY, true);
@@ -16,8 +18,9 @@ export const Public = () => SetMetadata(PUBLIC_KEY, true);
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
-    private reflector: Reflector
-  ) { }
+    private reflector: Reflector,
+    private usersService: UserService,
+  ) {}
 
   private getToken(request: Request): string | undefined {
     const [_, token] = request.headers.authorization?.split(' ') || [];
@@ -40,10 +43,17 @@ export class AuthGuard implements CanActivate {
     }
     try {
       const payload = await this.jwtService.verifyAsync(token, { secret: "prigodrogi" });
-      request['user'] = payload;
+      request['user'] = await this.usersService.findOneBy({ email: payload.email });
     } catch {
       throw new UnauthorizedException();
     }
     return true;
   }
 }
+
+export const CurrentUser = createParamDecorator(
+  (_, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.user;
+  },
+);
