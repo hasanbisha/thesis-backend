@@ -39,11 +39,11 @@ export class User {
   @OneToMany(() => Timesheet, timesheet => timesheet.user)
   timesheets: Timesheet[];
 
-  @ManyToMany(() => Job)
+  @ManyToMany(() => Job, (job) => job.users)
   @JoinTable()
   jobs: Job[];
 
-  @ManyToMany(() => Location)
+  @ManyToMany(() => Location, (location) => location.users)
   @JoinTable()
   locations: Location[];
 

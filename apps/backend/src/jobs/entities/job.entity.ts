@@ -1,6 +1,7 @@
 import { Clock } from "../../clock/entities/clock.entity";
 import { Timesheet } from "../../timesheets/entities/timesheet.entity";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "../../user/entities/user.entity";
 
 @Entity()
 export class Job {
@@ -31,5 +32,6 @@ export class Job {
   @OneToMany(() => Timesheet, timesheet => timesheet.job)
   timesheets: Timesheet[];
 
-  // TODO: users
+  @ManyToMany(() => User, (user) => user.jobs)
+  users: User[];
 }

@@ -29,7 +29,7 @@ export class LocationsService {
     }
     if (filters) {
       for (const key of Object.keys(filters)) {
-        query.where(`lower(${key}) LIKE lower('%${filters[key]}%')`);
+        query.andWhere(`lower(${key}) LIKE lower('%${filters[key]}%')`);
       }
     }
     return query.getManyAndCount();

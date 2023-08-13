@@ -51,20 +51,37 @@ export class UserService {
   }
 
   findAll(currentUser: User, { page, pageSize, filters, sortBy, orderBy }: CrudDto) {
-    const query = this.repository
-      .createQueryBuilder()
+    const query = this.repository.createQueryBuilder("user");
     if (page && pageSize) {
       query.take(pageSize).skip(page * pageSize);
     }
     if (sortBy) {
       query.orderBy(sortBy, orderBy || "DESC");
     }
+    if (filters?.jobs) {
+      query.innerJoinAndSelect("user.jobs", "job", "job.id = :job", {
+        job: filters.jobs,
+      });
+      delete filters.jobs;
+    } else {
+      query.leftJoinAndSelect("user.jobs", "job");
+    }
+    if (filters?.locations) {
+      query.innerJoinAndSelect("user.locations", "location", "location.id = :location", {
+        location: filters.locations,
+      });
+      delete filters.locations;
+    } else {
+      query.leftJoinAndSelect("user.locations", "location");
+    }
+    console.log(filters);
     if (filters) {
       for (const key of Object.keys(filters)) {
-        query.where(`lower(${key}) LIKE lower('%${filters[key]}%')`);
+        query.andWhere(`lower(${key}) LIKE lower('%${filters[key]}%')`);
       }
     }
-    query.where("user.id != :id", { id: currentUser.id });
+    query.andWhere("user.id != :id", { id: currentUser.id });
+    console.log(query.getSql());
     return query.getManyAndCount();
   }
 
