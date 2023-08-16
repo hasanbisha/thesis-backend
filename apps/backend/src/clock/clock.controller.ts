@@ -1,34 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body } from '@nestjs/common';
 import { ClockService } from './clock.service';
 import { CreateClockDto } from './dto/create-clock.dto';
-import { UpdateClockDto } from './dto/update-clock.dto';
+import { CurrentUser } from '../auth/auth.guard';
+import { User } from '../user/entities/user.entity';
 
 @Controller('clock')
 export class ClockController {
   constructor(private readonly clockService: ClockService) {}
 
   @Post()
-  create(@Body() createClockDto: CreateClockDto) {
-    return this.clockService.create(createClockDto);
+  create(@CurrentUser() user: User, @Body() body: CreateClockDto) {
+    return this.clockService.create(body, user);
   }
 
   @Get()
   findAll() {
-    return this.clockService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clockService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateClockDto: UpdateClockDto) {
-    return this.clockService.update(+id, updateClockDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clockService.remove(+id);
+    return this.clockService.getCurrentShift();
   }
 }

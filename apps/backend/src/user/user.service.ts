@@ -81,16 +81,22 @@ export class UserService {
       }
     }
     query.andWhere("user.id != :id", { id: currentUser.id });
-    console.log(query.getSql());
     return query.getManyAndCount();
   }
 
   findOne(id: number) {
-    return this.repository.findOneBy({ id });
+    return this.findOneBy({ id });
   }
 
   findOneBy(options: FindOptionsWhere<User>) {
-    return this.repository.findOneBy(options);
+    return this.repository.findOne({
+      where: options,
+      relations: {
+        jobs: true,
+        locations: true,
+        projects: true,
+      },
+    });
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {

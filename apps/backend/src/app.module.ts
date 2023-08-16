@@ -61,7 +61,7 @@ import { PaymentGroup } from './payment-groups/entities/payment-group.entity';
     JobsModule,
     LocationsModule,
     AuthModule,
-    // ProjectsModule,
+    ProjectsModule,
     // TimesheetsModule,
     // WorkingGroupsModule,
     // WorkTypesModule,

@@ -47,13 +47,13 @@ export class User {
   @JoinTable()
   locations: Location[];
 
+  @ManyToMany(() => Project)
+  @JoinTable()
+  projects: Project[];
+
   @ManyToOne(() => WorkingGroup, workingGroup => workingGroup.users)
   workingGroup: WorkingGroup;
 
   @ManyToOne(() => PaymentGroup, paymentGroup => paymentGroup.users)
   paymentGroup: PaymentGroup;
-
-  @ManyToMany(() => Project)
-  @JoinTable()
-  projects: Project[];
 }
