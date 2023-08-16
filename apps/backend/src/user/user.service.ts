@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,6 +8,7 @@ import { CrudDto } from '../utils/crud/query';
 import * as bcrypt from "bcrypt";
 import { Job } from '../jobs/entities/job.entity';
 import { Location } from '../locations/entities/location.entity';
+import { Project } from '../projects/entities/project.entity';
 
 @Injectable()
 export class UserService {
@@ -20,11 +21,14 @@ export class UserService {
 
     @InjectRepository(Location)
     private locationRepository: Repository<Location>,
+
+    @InjectRepository(Project)
+    private projectRepository: Repository<Project>,
   ) {}
 
   async create(currentUser: User, data: CreateUserDto) {
     if (currentUser.role <= data.role) {
-      throw new BadRequestException("some stuff");
+      throw new BadRequestException("You do not have permission to update this user");
     }
 
     const user = new User();
@@ -45,6 +49,11 @@ export class UserService {
     user.locations = await this.locationRepository
       .createQueryBuilder()
       .whereInIds(data.locations)
+      .getMany();
+
+    user.projects = await this.projectRepository
+      .createQueryBuilder()
+      .whereInIds(data.projects)
       .getMany();
 
     return this.repository.save(user);
@@ -74,13 +83,21 @@ export class UserService {
     } else {
       query.leftJoinAndSelect("user.locations", "location");
     }
-    console.log(filters);
+    if (filters?.projects) {
+      query.innerJoinAndSelect("user.projects", "project", "project.id = :project", {
+        project: filters.projects,
+      });
+      delete filters.projects;
+    } else {
+      query.leftJoinAndSelect("user.projects", "project");
+    }
     if (filters) {
       for (const key of Object.keys(filters)) {
         query.andWhere(`lower(${key}) LIKE lower('%${filters[key]}%')`);
       }
     }
     query.andWhere("user.id != :id", { id: currentUser.id });
+    query.andWhere("user.role <= :role", { role: currentUser.role });
     return query.getManyAndCount();
   }
 
@@ -99,8 +116,44 @@ export class UserService {
     });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, currentUser: User, data: UpdateUserDto) {
+    const user = await this.repository.findOneBy({ id });
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    if (currentUser.role <= data.role) {
+      throw new BadRequestException("You do not have permission to update this user");
+    }
+
+    Object.assign(user, {
+      firstName: data.firstName,
+      middleName: data.middleName,
+      lastName: data.lastName,
+      role: data.role,
+    });
+
+    if (data.password) {
+      user.password = await bcrypt.hash(data.password, 1);
+    }
+
+    user.jobs = await this.jobRepository
+      .createQueryBuilder()
+      .whereInIds(data.jobs)
+      .getMany();
+
+    user.locations = await this.locationRepository
+      .createQueryBuilder()
+      .whereInIds(data.locations)
+      .getMany();
+
+    user.projects = await this.projectRepository
+      .createQueryBuilder()
+      .whereInIds(data.projects)
+      .getMany();
+
+    return this.repository.save(user);
   }
 
   async remove(id: number) {

@@ -30,4 +30,9 @@ export class CreateUserDto {
     each: true,
   })
   locations: number[];
+
+  @IsNumber(undefined, {
+    each: true,
+  })
+  projects: number[];
 }
