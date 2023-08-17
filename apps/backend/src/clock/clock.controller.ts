@@ -14,7 +14,7 @@ export class ClockController {
   }
 
   @Get()
-  findAll() {
-    return this.clockService.getCurrentShift();
+  findAll(@CurrentUser() user: User) {
+    return this.clockService.getCurrentShift(user);
   }
 }

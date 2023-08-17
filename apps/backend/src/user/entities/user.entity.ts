@@ -47,7 +47,7 @@ export class User {
   @JoinTable()
   locations: Location[];
 
-  @ManyToMany(() => Project)
+  @ManyToMany(() => Project, (project) => project.users)
   @JoinTable()
   projects: Project[];
 

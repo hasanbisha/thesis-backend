@@ -4,14 +4,12 @@ import { User } from '../user/entities/user.entity';
 import { Clock } from './entities/clock.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import moment, { MomentInput } from 'moment';
+import * as moment from 'moment';
 import { Job } from '../jobs/entities/job.entity';
 import { Project } from '../projects/entities/project.entity';
 import { Location } from '../locations/entities/location.entity';
-
-export const getFormattedDate = (input: MomentInput) => {
-  return moment(input).format("YYYY-MM-DD");
-}
+import { TimesheetsService } from '../timesheets/timesheets.service';
+import { getFormattedDate } from '../utils/date';
 
 @Injectable()
 export class ClockService {
@@ -19,25 +17,33 @@ export class ClockService {
     @InjectRepository(Clock)
     private repository: Repository<Clock>,
 
-    @InjectRepository(Clock)
+    @InjectRepository(Job)
     private jobRepository: Repository<Job>,
 
-    @InjectRepository(Clock)
+    @InjectRepository(Location)
     private locationRepository: Repository<Location>,
 
-    @InjectRepository(Clock)
+    @InjectRepository(Project)
     private projectRepository: Repository<Project>,
+
+    private timesheetsService: TimesheetsService,
   ) {}
 
-  private async getLastClock() {
+  private async getLastClock(user: User) {
     return this.repository
-      .createQueryBuilder()
+      .createQueryBuilder("clock")
+      .leftJoinAndSelect("clock.user", "user")
+      .leftJoinAndSelect("clock.job", "job")
+      .leftJoinAndSelect("clock.location", "location")
+      .leftJoinAndSelect("clock.project", "project")
+      .where("userId = :user", { user: user.id })
+      .orderBy("timestamp", "DESC")
       .getOne();
   }
 
   async create(data: CreateClockDto, user: User) {
     const time = moment().unix();
-    const lastClock = await this.getLastClock();
+    const lastClock = await this.getLastClock(user);
 
     if (data.type !== "start-shift" && !lastClock) {
       throw new BadRequestException("There is no existing shift. Please start a shift!");
@@ -63,6 +69,10 @@ export class ClockService {
       throw new BadRequestException("Please end the break before ending the shift!");
     }
 
+    if (data.type === "end-shift" && lastClock.type === "end-shift") {
+      throw new BadRequestException("No shift could be ended!");
+    }
+
     if (data.type === "end-break" && lastClock.type !== "start-break") {
       throw new BadRequestException("There is no break to end!");
     }
@@ -70,7 +80,7 @@ export class ClockService {
     let job: Job;
     let location: Location;
     let project: Project;
-    if (data.type !== "start-shift") {
+    if (data.type === "start-shift") {
       // TODO: validate if user has resource
       job = await this.jobRepository.findOneBy({ id: data.job });
       if (!job) {
@@ -92,20 +102,30 @@ export class ClockService {
       project = lastClock.project
     }
 
-    const clock = new Clock();
+    let clock = new Clock();
     clock.type = data.type;
     clock.timestamp = time;
-    clock.date = getFormattedDate(time);
+    clock.date = getFormattedDate(moment.unix(time));
     clock.user = user;
     clock.job = job;
     clock.location = location;
     clock.project = project;
 
-    return this.repository.save(clock);
+    clock = await this.repository.save(clock);
+
+    if (clock.type !== "start-shift") {
+      this.timesheetsService.createFromClocks(lastClock, clock);
+    }
   }
 
-  async getCurrentShift() {
-    const lastClock = await this.getLastClock();
-    return lastClock;
+  async getCurrentShift(user: User) {
+    const date = getFormattedDate(moment());
+
+    return this.repository
+      .createQueryBuilder("clock")
+      .where("date = :date", { date })
+      .where("userId = :user", { user: user.id })
+      .orderBy("timestamp", "ASC")
+      .getMany();
   }
 }

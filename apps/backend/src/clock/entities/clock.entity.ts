@@ -3,8 +3,7 @@ import { Job } from "../../jobs/entities/job.entity";
 import { Project } from "../../projects/entities/project.entity";
 import { Timesheet } from "../../timesheets/entities/timesheet.entity";
 import { User } from "../../user/entities/user.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { IsString } from "class-validator";
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 export type ClockType = "start-shift"
   | "end-shift"
@@ -16,8 +15,8 @@ export class Clock {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @IsString()
-  type: ClockType;
+  @Column()
+  type: "start-shift" | "end-shift" | "start-break" | "end-break";
 
   @Column()
   date: string;
@@ -37,6 +36,7 @@ export class Clock {
   @ManyToOne(() => User,  user => user.clocks)
   user: User;
 
-  @ManyToOne(() => Timesheet,  timesheet => timesheet.clocks)
-  timesheet: Timesheet;
+  @ManyToMany(() => Timesheet, (timesheet) => timesheet.clocks)
+  @JoinTable()
+  timesheets: Timesheet[];
 }
