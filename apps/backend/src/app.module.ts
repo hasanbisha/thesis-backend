@@ -12,10 +12,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { LocationsModule } from './locations/locations.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TimesheetsModule } from './timesheets/timesheets.module';
-import { WorkingGroupsModule } from './working-groups/working-groups.module';
-import { WorkTypesModule } from './work-types/work-types.module';
 import { PaymentGroupsModule } from './payment-groups/payment-groups.module';
-import { WorkRulesModule } from './work-rules/work-rules.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './user/roles/roles.guard';
@@ -30,7 +27,9 @@ import { WorkType } from './work-types/entities/work-type.entity';
 import { WorkingGroup } from './working-groups/entities/working-group.entity';
 import { PaymentGroup } from './payment-groups/entities/payment-group.entity';
 
-// /home/hasanbisha/work-projects/tema-diplomes/backend/dist/apps/backend
+import { WorkingGroupsModule } from './working-groups/working-groups.module';
+import { WorkTypesModule } from './work-types/work-types.module';
+import { WorkRulesModule } from './work-rules/work-rules.module';
 
 @Module({
   imports: [

@@ -47,8 +47,11 @@ export class ClockService {
   }
 
   async create(data: CreateClockDto, user: User) {
-    const time = moment().unix();
     const lastClock = await this.getLastClock(user);
+    let time = moment().unix();
+    if (lastClock?.timestamp > time) {
+      time = lastClock?.timestamp + 1;
+    }
 
     if (data.type !== "start-shift" && !lastClock) {
       throw new BadRequestException("There is no existing shift. Please start a shift!");

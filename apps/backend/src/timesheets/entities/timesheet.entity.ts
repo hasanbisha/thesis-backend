@@ -9,8 +9,6 @@ import { Column, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColum
 import * as moment from "moment";
 import { PaymentGroup } from "../../payment-groups/entities/payment-group.entity";
 
-const OVERTIME_MULTIPLIER = 2;
-
 export type TimesheetType = "regular" | "break" | "overtime";
 
 @Entity()
@@ -69,15 +67,15 @@ export class Timesheet {
   }
 
   calculateTotal() {
-    if (!this.duration || !this.job || !this.type) {
-      throw new Error("Duration, job and type are required to calculate duration");
+    if (!this.duration || !this.job || !this.type || !this.paymentGroup) {
+      throw new Error("Duration, job, payment group and type are required to calculate duration");
     }
     if (this.type === "break") {
       this.total = 0;
       return;
     }
     const multiplier = this.type === "overtime"
-      ? OVERTIME_MULTIPLIER
+      ? this.paymentGroup.overtimeMultiplier
       : 1;
     this.total = moment.duration(this.duration, "second").asHours() * this.job.rate * multiplier;
   }

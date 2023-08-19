@@ -1,17 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Timesheet } from './entities/timesheet.entity';
 import { Repository } from 'typeorm';
 import { Clock } from '../clock/entities/clock.entity';
 import * as moment from "moment";
-
-const MAX_UNTILL_OVERTIME = moment.duration(8, "hour").asSeconds();
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class TimesheetsService {
   constructor(
     @InjectRepository(Timesheet)
     private repository: Repository<Timesheet>,
+
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
 
     @InjectRepository(Clock)
     private clockRepository: Repository<Clock>,
@@ -50,16 +52,17 @@ export class TimesheetsService {
       timesheet.type = "break";
     }
 
+    const overtimeThreshold = moment.duration(paymentGroup.overtimeThreshold, "hour").asSeconds();
     // ONLY OVERTIME
-    if (dailyDuration >= MAX_UNTILL_OVERTIME) {
+    if (dailyDuration >= overtimeThreshold) {
       timesheet.type = "overtime";
     }
 
     // SPLIT REGULAR AND OVERTIME
     const totalDuration = dailyDuration + timesheet.duration;
-    const overtimeDuration = totalDuration - MAX_UNTILL_OVERTIME;
+    const overtimeDuration = totalDuration - overtimeThreshold;
     if (overtimeDuration > 0) {
-      timesheet.end = timesheet.start + (MAX_UNTILL_OVERTIME - dailyDuration);
+      timesheet.end = timesheet.start + (overtimeThreshold - dailyDuration);
     }
 
     timesheet.calculateDuration();
@@ -83,7 +86,78 @@ export class TimesheetsService {
     await this.clockRepository.save(endClock);
   }
 
-  findAll() {
-    return this.repository;
+  async getOverall(user: User, from: number, to: number) {
+    const data = await this.repository
+      .createQueryBuilder()
+      .select("type, sum(total) as total, sum(duration) as duration")
+      .andWhere("userId = :user", { user: user.id })
+      .andWhere("start >= :start", { start: from })
+      .andWhere("start <= :end", { end: to })
+      .groupBy("type")
+      .getRawMany();
+    return data.reduce((total, item) => {
+      total[item.type] = item;
+      return total;
+    }, {});
+  }
+
+  async getTeamOverall(user: User, from: number, to: number) {
+    const usersQuery = this.userRepository
+      .createQueryBuilder()
+      .select("id")
+      .where("role <= :role", { role: user.role });
+
+    const data = await this.repository
+      .createQueryBuilder()
+      .select("type, sum(total) as total, sum(duration) as duration")
+      .andWhere(`userId in (${usersQuery.getQuery()})`)
+      .andWhere("start >= :start", { start: from })
+      .andWhere("start <= :end", { end: to })
+      .groupBy("type")
+      .getRawMany();
+    return data.reduce((total, item) => {
+      total[item.type] = item;
+      return total;
+    }, {});
+  }
+
+  async findAll(user: User, from: number, to: number) {
+    const timesheets = await this.repository
+      .createQueryBuilder()
+      .andWhere("userId = :user", { user: user.id })
+      .andWhere("start >= :start", { start: from })
+      .andWhere("start <= :end", { end: to })
+      .getMany();
+    return timesheets.reduce((total, timesheet) => {
+      if (!(timesheet.date in total)) {
+        total[timesheet.date] = [];
+      }
+      total[timesheet.date].push(timesheet);
+      return total;
+    }, {});
+  }
+
+  async getTeam(user: User, from: number, to: number) {
+    const users = await this.userRepository
+      .createQueryBuilder("user")
+      .andWhere("user.id != :user", { user: user.id })
+      .andWhere("user.role <= :role", { role: user.role })
+      .leftJoinAndSelect("user.paymentGroup", "paymentGroup")
+      .getMany();
+
+    console.log(users.map(({ id }) => id));
+    const stats = await this.repository
+      .createQueryBuilder()
+      .select("userId as user, type, sum(total) as total, sum(duration) as duration")
+      .andWhere("start >= :start", { start: from })
+      .andWhere("start <= :end", { end: to })
+      .andWhere("userId in (:users)", {
+        users: users.map(({ id }) => id).join(", ")
+      })
+      .groupBy("userId")
+      .addGroupBy("type")
+      .getRawMany();
+
+    return stats;
   }
 }
