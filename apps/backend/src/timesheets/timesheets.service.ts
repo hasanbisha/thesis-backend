@@ -145,19 +145,53 @@ export class TimesheetsService {
       .leftJoinAndSelect("user.paymentGroup", "paymentGroup")
       .getMany();
 
-    console.log(users.map(({ id }) => id));
     const stats = await this.repository
       .createQueryBuilder()
       .select("userId as user, type, sum(total) as total, sum(duration) as duration")
       .andWhere("start >= :start", { start: from })
       .andWhere("start <= :end", { end: to })
-      .andWhere("userId in (:users)", {
-        users: users.map(({ id }) => id).join(", ")
-      })
+      .andWhere(`userId in (${users.map(({ id }) => id).join(", ")})`)
       .groupBy("userId")
       .addGroupBy("type")
       .getRawMany();
 
-    return stats;
+    const map = stats.reduce((total, stat) => {
+      if (!(stat.user in total)) {
+        total[stat.user] = {
+          regular: {
+            total: 0,
+            duration: 0,
+          },
+          break: {
+            total: 0,
+            duration: 0,
+          },
+          overtime: {
+            total: 0,
+            duration: 0,
+          },
+        }
+      }
+      total[stat.user][stat.type].total = stat.total;
+      total[stat.user][stat.type].duration = stat.duration;
+      return total;
+    }, {});
+
+    return users.map((user) => {
+      let total = 0;
+      let duration = 0;
+      for (const item of Object.values(map[user.id])) {
+        total += (item as any).total;
+        duration += (item as any).duration;
+      }
+      return {
+        ...user,
+        overview: {
+          ...map[user.id],
+          total,
+          duration,
+        },
+      };
+    });
   }
 }

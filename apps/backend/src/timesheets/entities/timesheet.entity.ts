@@ -5,7 +5,7 @@ import { Project } from "../../projects/entities/project.entity";
 import { User } from "../../user/entities/user.entity";
 import { WorkType } from "../../work-types/entities/work-type.entity";
 import { WorkingGroup } from "../../working-groups/entities/working-group.entity";
-import { Column, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import * as moment from "moment";
 import { PaymentGroup } from "../../payment-groups/entities/payment-group.entity";
 
