@@ -7,6 +7,7 @@ import { WorkType } from "../../work-types/entities/work-type.entity";
 import { WorkingGroup } from "../../working-groups/entities/working-group.entity";
 import { Column, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import * as moment from "moment";
+import { PaymentGroup } from "../../payment-groups/entities/payment-group.entity";
 
 const OVERTIME_MULTIPLIER = 2;
 
@@ -46,6 +47,9 @@ export class Timesheet {
 
   @ManyToOne(() => Project, project => project.timesheets)
   project: Project;
+
+  @ManyToOne(() => PaymentGroup, paymentGroup => paymentGroup.timesheets)
+  paymentGroup: PaymentGroup;
 
   @ManyToMany(() => Clock, clock => clock.timesheets)
   clocks: Clock[];

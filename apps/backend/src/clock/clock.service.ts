@@ -10,6 +10,7 @@ import { Project } from '../projects/entities/project.entity';
 import { Location } from '../locations/entities/location.entity';
 import { TimesheetsService } from '../timesheets/timesheets.service';
 import { getFormattedDate } from '../utils/date';
+import { PaymentGroup } from '../payment-groups/entities/payment-group.entity';
 
 @Injectable()
 export class ClockService {
@@ -26,6 +27,9 @@ export class ClockService {
     @InjectRepository(Project)
     private projectRepository: Repository<Project>,
 
+    @InjectRepository(PaymentGroup)
+    private paymentGroupRepository: Repository<PaymentGroup>,
+
     private timesheetsService: TimesheetsService,
   ) {}
 
@@ -36,6 +40,7 @@ export class ClockService {
       .leftJoinAndSelect("clock.job", "job")
       .leftJoinAndSelect("clock.location", "location")
       .leftJoinAndSelect("clock.project", "project")
+      .leftJoinAndSelect("clock.paymentGroup", "paymentGroup")
       .where("userId = :user", { user: user.id })
       .orderBy("timestamp", "DESC")
       .getOne();
@@ -77,9 +82,14 @@ export class ClockService {
       throw new BadRequestException("There is no break to end!");
     }
 
+    if (!user.paymentGroup) {
+      throw new BadRequestException("The user should have a payment group to use the clock in feature!");
+    }
+
     let job: Job;
     let location: Location;
     let project: Project;
+    let paymentGroup: PaymentGroup;
     if (data.type === "start-shift") {
       // TODO: validate if user has resource
       job = await this.jobRepository.findOneBy({ id: data.job });
@@ -88,18 +98,24 @@ export class ClockService {
       }
 
       location = await this.locationRepository.findOneBy({ id: data.location });
-      if (!job) {
+      if (!location) {
         throw new NotFoundException("Location not found");
       }
 
       project = await this.projectRepository.findOneBy({ id: data.project });
-      if (!job) {
+      if (!project) {
         throw new NotFoundException("Project not found");
+      }
+
+      paymentGroup = await this.paymentGroupRepository.findOneBy({ id: user.paymentGroup.id });
+      if (!paymentGroup) {
+        throw new NotFoundException("Payment group not found");
       }
     } else {
       job = lastClock.job
       location = lastClock.location
       project = lastClock.project
+      paymentGroup = lastClock.paymentGroup
     }
 
     let clock = new Clock();
@@ -110,6 +126,7 @@ export class ClockService {
     clock.job = job;
     clock.location = location;
     clock.project = project;
+    clock.paymentGroup = paymentGroup;
 
     clock = await this.repository.save(clock);
 

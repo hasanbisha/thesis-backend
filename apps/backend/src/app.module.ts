@@ -63,9 +63,10 @@ import { PaymentGroup } from './payment-groups/entities/payment-group.entity';
     AuthModule,
     ProjectsModule,
     TimesheetsModule,
+    PaymentGroupsModule,
+
     // WorkingGroupsModule,
     // WorkTypesModule,
-    // PaymentGroupsModule,
     // WorkRulesModule,
   ],
   controllers: [AppController],

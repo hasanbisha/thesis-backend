@@ -4,6 +4,7 @@ import { Project } from "../../projects/entities/project.entity";
 import { Timesheet } from "../../timesheets/entities/timesheet.entity";
 import { User } from "../../user/entities/user.entity";
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { PaymentGroup } from "../../payment-groups/entities/payment-group.entity";
 
 export type ClockType = "start-shift"
   | "end-shift"
@@ -32,6 +33,9 @@ export class Clock {
 
   @ManyToOne(() => Project,  project => project.clocks)
   project: Project;
+
+  @ManyToOne(() => PaymentGroup,  paymentGroup => paymentGroup.clocks)
+  paymentGroup: PaymentGroup;
 
   @ManyToOne(() => User,  user => user.clocks)
   user: User;

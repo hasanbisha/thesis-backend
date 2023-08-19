@@ -9,6 +9,7 @@ import * as bcrypt from "bcrypt";
 import { Job } from '../jobs/entities/job.entity';
 import { Location } from '../locations/entities/location.entity';
 import { Project } from '../projects/entities/project.entity';
+import { PaymentGroup } from '../payment-groups/entities/payment-group.entity';
 
 @Injectable()
 export class UserService {
@@ -24,6 +25,9 @@ export class UserService {
 
     @InjectRepository(Project)
     private projectRepository: Repository<Project>,
+
+    @InjectRepository(PaymentGroup)
+    private paymentGroupRepository: Repository<PaymentGroup>,
   ) {}
 
   async create(currentUser: User, data: CreateUserDto) {
@@ -55,6 +59,8 @@ export class UserService {
       .createQueryBuilder()
       .whereInIds(data.projects)
       .getMany();
+
+    user.paymentGroup = await this.paymentGroupRepository.findOneBy({ id: data.paymentGroup });
 
     return this.repository.save(user);
   }
@@ -91,6 +97,14 @@ export class UserService {
     } else {
       query.leftJoinAndSelect("user.projects", "project");
     }
+    if (filters?.paymentGroup) {
+      query.innerJoinAndSelect("user.paymentGroup", "paymentGroup", "paymentGroup.id = :paymentGroup", {
+        paymentGroup: filters.paymentGroup,
+      });
+      delete filters.paymentGroup;
+    } else {
+      query.leftJoinAndSelect("user.paymentGroup", "paymentGroup");
+    }
     if (filters) {
       for (const key of Object.keys(filters)) {
         query.andWhere(`lower(${key}) LIKE lower('%${filters[key]}%')`);
@@ -112,6 +126,7 @@ export class UserService {
         jobs: true,
         locations: true,
         projects: true,
+        paymentGroup: true,
       },
     });
   }
@@ -152,6 +167,8 @@ export class UserService {
       .createQueryBuilder()
       .whereInIds(data.projects)
       .getMany();
+
+    user.paymentGroup = await this.paymentGroupRepository.findOneBy({ id: data.paymentGroup });
 
     return this.repository.save(user);
   }

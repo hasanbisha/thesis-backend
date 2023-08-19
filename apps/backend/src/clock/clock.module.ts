@@ -7,9 +7,10 @@ import { Location } from '../locations/entities/location.entity';
 import { Job } from '../jobs/entities/job.entity';
 import { Project } from '../projects/entities/project.entity';
 import { TimesheetsModule } from '../timesheets/timesheets.module';
+import { PaymentGroup } from '../payment-groups/entities/payment-group.entity';
 
 @Module({
-  imports: [TimesheetsModule, TypeOrmModule.forFeature([Clock, Job, Location, Project])],
+  imports: [TimesheetsModule, TypeOrmModule.forFeature([Clock, Job, Location, Project, PaymentGroup])],
   controllers: [ClockController],
   providers: [ClockService]
 })

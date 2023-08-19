@@ -24,8 +24,8 @@ export class LocationsController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateLocationDto: UpdateLocationDto) {
-    return this.locationsService.update(id, updateLocationDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() data: UpdateLocationDto) {
+    return this.locationsService.update(id, data);
   }
 
   @Delete(':id')

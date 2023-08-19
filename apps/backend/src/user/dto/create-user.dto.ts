@@ -35,4 +35,7 @@ export class CreateUserDto {
     each: true,
   })
   projects: number[];
+
+  @IsNumber()
+  paymentGroup: number;
 }

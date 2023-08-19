@@ -18,7 +18,7 @@ export class TimesheetsService {
   ) {}
 
   async createFromClocks(startClock: Clock, endClock: Clock) {
-    const { date, user, job, location, project } = startClock;
+    const { date, user, job, location, project, paymentGroup } = startClock;
 
     const dailyTimesheets = await this.repository
       .createQueryBuilder("timesheet")
@@ -35,7 +35,7 @@ export class TimesheetsService {
     const timesheet = new Timesheet();
     startClock.timesheets = [timesheet];
     endClock.timesheets = [timesheet];
-    Object.assign(timesheet, { date, user, job, location, project });
+    Object.assign(timesheet, { date, user, job, location, project, paymentGroup });
     timesheet.clocks = [startClock, endClock];
     timesheet.start = startClock.timestamp;
     timesheet.end = endClock.timestamp;
