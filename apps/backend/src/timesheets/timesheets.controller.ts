@@ -23,7 +23,7 @@ export class TimesheetsController {
     @Query("from", ParseIntPipe) from: number,
     @Query("to", ParseIntPipe) to: number,
   ) {
-    return this.timesheetsService.getOverall(user, from, to);
+    return this.timesheetsService.getMyOverall(user, from, to);
   }
 
   @Get("/team")

@@ -86,7 +86,26 @@ export class TimesheetsService {
     await this.clockRepository.save(endClock);
   }
 
-  async getOverall(user: User, from: number, to: number) {
+  getOverallConfig() {
+    const types = ["regular", "break", "overtime"];
+    return types.reduce((total, type) => ({
+      ...total,
+      [type]: {
+        type,
+        total: 0,
+        duration: 0,
+      },
+    }), {});
+  }
+
+  calculateOverall(data: { type: Timesheet["type"], total: number, duration: number }[]) {
+    return data.reduce((total, item) => {
+      total[item.type] = item;
+      return total;
+    }, this.getOverallConfig());
+  }
+
+  async getMyOverall(user: User, from: number, to: number) {
     const data = await this.repository
       .createQueryBuilder()
       .select("type, sum(total) as total, sum(duration) as duration")
@@ -95,30 +114,27 @@ export class TimesheetsService {
       .andWhere("start <= :end", { end: to })
       .groupBy("type")
       .getRawMany();
-    return data.reduce((total, item) => {
-      total[item.type] = item;
-      return total;
-    }, {});
+    return this.calculateOverall(data);
   }
 
   async getTeamOverall(user: User, from: number, to: number) {
     const usersQuery = this.userRepository
       .createQueryBuilder()
       .select("id")
-      .where("role <= :role", { role: user.role });
+      .andWhere("id != :id", { id: user.id })
+      .andWhere("role <= :role", { role: user.role });
 
     const data = await this.repository
       .createQueryBuilder()
       .select("type, sum(total) as total, sum(duration) as duration")
       .andWhere(`userId in (${usersQuery.getQuery()})`)
+      .setParameters(usersQuery.getParameters())
       .andWhere("start >= :start", { start: from })
       .andWhere("start <= :end", { end: to })
       .groupBy("type")
       .getRawMany();
-    return data.reduce((total, item) => {
-      total[item.type] = item;
-      return total;
-    }, {});
+
+    return this.calculateOverall(data);
   }
 
   async findAll(user: User, from: number, to: number) {
@@ -138,12 +154,15 @@ export class TimesheetsService {
   }
 
   async getTeam(user: User, from: number, to: number) {
-    const users = await this.userRepository
+    const [users, totalItems] = await this.userRepository
       .createQueryBuilder("user")
       .andWhere("user.id != :user", { user: user.id })
       .andWhere("user.role <= :role", { role: user.role })
+      .leftJoinAndSelect("user.jobs", "job")
+      .leftJoinAndSelect("user.locations", "location")
+      .leftJoinAndSelect("user.projects", "project")
       .leftJoinAndSelect("user.paymentGroup", "paymentGroup")
-      .getMany();
+      .getManyAndCount();
 
     const stats = await this.repository
       .createQueryBuilder()
@@ -177,7 +196,7 @@ export class TimesheetsService {
       return total;
     }, {});
 
-    return users.map((user) => {
+    const usersWithStats = users.map((user) => {
       let total = 0;
       let duration = 0;
       for (const item of Object.values(map[user.id])) {
@@ -193,5 +212,7 @@ export class TimesheetsService {
         },
       };
     });
+
+    return [usersWithStats, totalItems];
   }
 }
