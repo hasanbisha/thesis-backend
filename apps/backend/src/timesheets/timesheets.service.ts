@@ -139,10 +139,13 @@ export class TimesheetsService {
 
   async findAll(user: User, from: number, to: number) {
     const timesheets = await this.repository
-      .createQueryBuilder()
-      .andWhere("userId = :user", { user: user.id })
-      .andWhere("start >= :start", { start: from })
-      .andWhere("start <= :end", { end: to })
+      .createQueryBuilder("timesheet")
+      .andWhere("timesheet.userId = :user", { user: user.id })
+      .andWhere("timesheet.start >= :start", { start: from })
+      .andWhere("timesheet.start <= :end", { end: to })
+      .leftJoinAndSelect("timesheet.job", "job")
+      .leftJoinAndSelect("timesheet.location", "location")
+      .leftJoinAndSelect("timesheet.project", "project")
       .getMany();
     return timesheets.reduce((total, timesheet) => {
       if (!(timesheet.date in total)) {
