@@ -1,4 +1,4 @@
-import { NestFactory,  } from '@nestjs/core';
+import { NestFactory, } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 
@@ -21,5 +21,17 @@ async function bootstrap() {
     })
   );
   await app.listen(3001);
+  const server = app.getHttpServer();
+  const router = server._events.request._router;
+
+  const availableRoutes: [] = router.stack
+    .map(layer => {
+      if (layer.route) {
+        console.log(`${
+          (layer.route?.stack[0].method as string).toUpperCase()
+        }: ${layer.route?.path}`);
+      }
+    });
+
 }
 bootstrap();
